@@ -1,0 +1,19 @@
+{
+  "name": "কাঞ্চন নগর স্মার্ট শপ",
+  "short_name": "কাঞ্চন নগর",
+  "description": "কাঞ্চন নগর স্মার্ট শপ - বাংলাদেশের সেরা অনলাইন শপিং অ্যাপ",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#28a745",
+  "theme_color": "#28a745",
+  "icons": [
+    {
+      "src":"https://i.ibb.co/YFyWCMFG/1771334338777.png", 
+"sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "lang": "bn",
+  "orientation": "portrait"
+}

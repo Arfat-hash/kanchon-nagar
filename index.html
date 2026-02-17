@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>কাঞ্চন নগর স্মার্ট শপ</title>
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/1170/1170678.png">
+    <meta name="theme-color" content="#28a745">
+    <style>
+    :root {
+        --primary: #28a745; --secondary: #007bff; --bg: #f8fafd; --danger: #d62828;
+        --dark-bg: #181824; --dark-cont: #232345; --dark-text: #e0e0e0;
+    }
+    body { font-family: 'Arial', sans-serif; background: var(--bg); color: #222; margin:0; padding:10px; transition:.2s all;}
+    .container { max-width: 560px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 24px rgba(0,0,0,0.10);}
+    .dark body{background:var(--dark-bg)!important;}
+    .dark .container{background:var(--dark-cont)!important; color: #f0f2f4;}
+    .header{text-align:center;margin-bottom:12px;}
+    .prod-actions{display:flex;gap:7px;position:absolute;right:7px;top:7px;}
+    .prod-actions button{border:none;background:none;cursor:pointer;}
+    .product-card{display:flex;align-items:center;padding:9px;border-bottom:1px solid #eee;position:relative;}
+    .product-img{width:64px;height:64px;border-radius:10px;object-fit:cover;margin-right:13px;background:#eee;border:2px solid #f4f4f4;}
+    .product-info{flex-grow:1;}
+    .price { color: #e44d26; font-weight: bold;}
+    .quantity {width:47px;padding:2px;border:1px solid #ccc;border-radius:4px;}
+    select, input[type="text"], input[type="number"] ,textarea {padding:9px;border:1px solid #ccc;border-radius:6px;}
+    .btn{padding:10.5px 21px;border:none;border-radius:7px;cursor:pointer;font-weight:600;margin-top:8px;}
+    .btn-blue{background:var(--secondary);color:white;}
+    .btn-green{background:var(--primary);color:#fff;}
+    .btn-danger{background:var(--danger);color:#fff;margin-top:4px;}
+    .toggle-switch{margin-left:10px;}
+    .admin-panel{display:none;background:#f5faff;border:2px dashed #bddcfa;padding:10px 10px 7px 10px;margin-top:15px;border-radius:10px;}
+    .admin-panel input,.admin-panel select{width:98%;margin:4px 0;}
+    .cat-chip{display:inline-block;margin:3px 8px 3px 0;padding:4px 12px;background:#eaf6ee;border-radius:10px;cursor:pointer;}
+    .cat-chip.active{background:var(--primary);color:#fff;}
+    .lang-btn{padding:5px 15px;border-radius:5px; font-weight:600; margin:0 2px;}
+    .lang-btn.active {background: var(--primary);color:#fff;}
+    #main-app {transition:.2s all;}
+    .app-invoice{background:#fffbf3;border-radius:13px;padding:16px;margin:10px 0;}
+    .fbmsg{background:#f2f0ec;padding:9px 14px;border-radius:8px;margin-bottom:7px;}
+    @media (max-width: 600px){
+        .container{max-width:99vw;padding:6vw;}
+        .product-card{flex-direction:column;align-items:flex-start;}
+        .product-img{margin-bottom:7px;}
+    }
+    .dark .product-card{border-bottom:1px solid #3c3f63;}
+    .dark .app-invoice{background:#1e1f34;}
+    .dark .fbmsg{background:#232344;}
+    </style>
+</head>
+<body>
+<div class="container" id="app-wrap">
+    <div class="header">
+        <h2 id="shop-title">🛒 কাঞ্চন নগর  অনলাইন বাজার</h2>
+        <div>
+            <span class="lang-btn active" onclick="setLang('bn')" id="lang-bn">বাংলা</span>
+            <span class="lang-btn" onclick="setLang('en')" id="lang-en">English</span>
+            <span class="cat-chip" style="float:right" onclick="toggleDark()">🌙</span>
+        </div>
+        <p id="delinfo">৫-৬ কিমি এর মধ্যে ফ্রি ডেলিভারি!</p>
+    </div>
+    <!-- search & filter -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:7px;">
+        <input type="text" id="search-text" placeholder="পণ্যের নাম/দাম লিখুন" oninput="render()">
+        <select id="filter-cat" onchange="render()" style="min-width:110px;">
+            <option value="all">সব ক্যাটাগরি</option>
+        </select>
+        <span id="stock-btn" class="cat-chip" onclick="filterStock()" style="font-size:13px;">স্টকে আছে</span>
+    </div>
+    <!-- category chips -->
+    <div id="cat-chips"></div>
+    <!-- location & main -->
+    <div id="location-section"><button class="btn btn-blue" onclick="checkLocation()">
+        📍 <span id="btnloc">আপনার লোকেশন চেক করুন</span></button>
+        <p id="loc-status" style="text-align:center; font-weight:bold;"></p>
+    </div>
+    <div id="main-app" style="opacity:0.28;pointer-events:none;">
+        <h3 id="plist-txt">পণ্যের তালিকা</h3>
+        <div id="product-list"></div>
+        <!-- সারাংশ ও অর্ডার -->
+        <div class="app-invoice">
+            <p id="total-bill">মোট বিল: ০.০০০ OMR</p>
+            <input type="text" id="user-name" placeholder="আপনার নাম">
+            <input type="text" id="user-addr" placeholder="বাসার নম্বর ও এলাকা">
+            <input type="text" id="user-phone" placeholder="যোগাযোগ নাম্বার" maxlength="15">
+            <button class="btn btn-green" id="order-btn" style="display:none" onclick="prepareOrder()">অর্ডার দিন</button>
+            <span style="font-size:13px;color:#888;margin-left:15px;" id="ordhis-btn" onclick="showHistory()">অর্ডার হিস্ট্রি</span>
+            <span id="dlpdf-btn" style="font-size:13px;color:var(--secondary);margin-left:8px;cursor:pointer;" onclick="downloadPDF()">PDF</span>
+        </div>
+        <!-- ফিডব্যাক -->
+        <div style="margin-top:18px;border-top:1px solid #eee;padding-top:10px;">
+            <h4 id="fdtxt">ফিডব্যাক দিন</h4>
+            <textarea id="fb-text" style="width:95%;min-height:38px;"></textarea><br>
+            <button onclick="sendFeedback()" class="btn btn-blue" style="min-width:70px;">সেন্ড</button>
+            <div id="feedback-list"></div>
+        </div>
+    </div>
+    <!-- Admin Panel -->
+    <button onclick="accessAdmin()" style="margin-top:16px; background:none; border:none; color:#aaa; font-size:11px;">Admin</button>
+    <div id="admin-panel" class="admin-panel">
+        <h4 id="addtxt">নতুন পণ্য যোগ / এডিট (Admin)</h4>
+        <input type="text" id="new-name" placeholder="নাম">
+        <input type="number" step="0.001" id="new-price" placeholder="দাম">
+        <select id="new-cat"><option value="">--ক্যাটাগরি--</option></select>
+        <input type="number" min="0" id="new-stock" placeholder="স্টক">
+        <input type="text" id="new-img" placeholder="ছবির লিঙ্ক (URL)">
+        <input type="file" id="new-img-file" accept="image/*" onchange="previewImg()">
+        <div id="img-prev"></div>
+        <button class="btn btn-blue" onclick="addOrUpdateProduct()">সংরক্ষণ</button>
+        <button onclick="clearAllData()" class="btn btn-danger">সব ডাটা রিসেট</button>
+        <input type="hidden" id="edit-index">
+    </div>
+    <!-- OTP Modal -->
+    <div id="otp-modal" style="display:none;position:fixed;left:0;top:0;right:0;bottom:0;z-index:99;background:rgba(0,0,0,0.4);">
+        <div style="background:#fff;padding:25px 20px;border-radius:10px;max-width:388px;margin:100px auto;text-align:center;box-shadow:0 2px 20px #0002;">
+            <div id="otp-msg"></div>
+            <input type="text" id="otp-input" style="padding:8px;font-size:17px;width:60px;text-align:center;" maxlength="4"><br>
+            <button onclick="submitOTP()" class="btn btn-green">Ok</button>
+        </div>
+    </div>
+    <!-- অর্ডার হিস্ট্রি Modal -->
+    <div id="history-modal" style="display:none;position:fixed;left:0;top:0;right:0;bottom:0;z-index:99;background:rgba(0,0,0,0.38);">
+        <div style="background:#fff;padding:20px 15px;max-width:430px;margin:60px auto 12px auto;border-radius:10px;box-shadow:0 1px 12px #0003;">
+            <h4>অর্ডার হিস্ট্রি</h4>
+            <div id="history-list"></div>
+            <button onclick="closeHistory()" class="btn btn-danger" style="margin-top:7px;">বন্ধ করুন</button>
+        </div>
+    </div>
+</div>
+<script>
+// ---------- config ----------
+const SHOP_LAT=22.7323592, SHOP_LON=91.8419557, freeRange=6;
+const ADMIN_PASS="1996", DEFAULT_IMG="https://cdn-icons-png.flaticon.com/512/3081/3081840.png";
+const cats=["নিত্যপণ্য","চাল","ডাল","তেল","সাবান","মসলা","শাকসবজি","দুধ","বিস্কুট","ডিম","হিমায়িত"];
+let products=JSON.parse(localStorage.getItem('myProducts'))||[
+    {name:"বাসমতি চাল",price:4.5,img:"https://cdn-icons-png.flaticon.com/512/5029/5029214.png",cat:"চাল",stock:10,imgs:[]},
+    {name:"মসুর ডাল",price:0.8,img:"https://cdn-icons-png.flaticon.com/512/7030/7030303.png",cat:"ডাল",stock:70,imgs:[]}
+];
+let feedbacks=JSON.parse(localStorage.getItem("feedbacks")||"[]"),
+    orders=JSON.parse(localStorage.getItem("orderHistory")||"[]");
+let deliveryCharge=0, lang="bn", showStockOnly=false;
+// ---------- util ----------
+function getDistanceKM(lat1,lon1,lat2,lon2){
+   const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
+   const a=Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); }
+function setLang(l){
+    lang=l;
+    document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('lang-bn').classList.toggle('active',l=='bn');
+    document.getElementById('lang-en').classList.toggle('active',l=='en');
+document.getElementById('shop-title').innerText=l=='en'?"Kanchan Nagar Smart Shop":"🛒 কাঞ্চন নগর অনলাইন বাজার";
+    document.getElementById('plist-txt').innerText=l=='en'?"Products":"পণ্যের তালিকা";
+    document.getElementById('addtxt').innerText=l=='en'?"Add / Edit Product (Admin)":"নতুন পণ্য যোগ / এডিট (Admin)";
+    document.getElementById('fdtxt').innerText=l=='en'?"Give Feedback":"ফিডব্যাক দিন";
+    document.getElementById('delinfo').innerText=l=='en'?'Free delivery within 6km!':"৫-৬ কিমি এর মধ্যে ফ্রি ডেলিভারি!";
+    render();
+}
+function toggleDark(){
+   let dt=document.body.classList.toggle('dark');
+   localStorage.setItem('isDark',dt?"1":"");
+}
+if(localStorage.getItem('isDark'))document.body.classList.add('dark');
+function filterStock(){
+   showStockOnly=!showStockOnly;
+   document.getElementById('stock-btn').classList.toggle('active',showStockOnly);
+   render();
+}
+// ---------------- Main render()
+function render(){
+    // setup cat filter/options
+    let csel=document.getElementById('filter-cat');
+    if(csel.children.length<2) {
+        cats.forEach(c=>{let o=document.createElement('option');o.value=c;o.innerText=c;csel.appendChild(o);});
+        let ncat=document.getElementById('new-cat');
+        cats.forEach(c=>{let o=document.createElement('option');o.value=c;o.innerText=c;ncat.appendChild(o);});
+    }
+    // quick chips
+    let cch="";
+    cats.forEach(c=>cch+=`<span class="cat-chip${c==csel.value?' active':''}" onclick="document.getElementById('filter-cat').value='${c}';render()">${c}</span>`);
+    document.getElementById('cat-chips').innerHTML = cch;
+    // প্রোডাক্ট সার্চ/ফিল্টার
+    let q=(document.getElementById('search-text').value||"").toLowerCase();
+    let fc=document.getElementById('filter-cat').value;
+    let list=document.getElementById('product-list'); list.innerHTML="";
+    products.forEach((p,i)=>{
+        if( (fc!="all"&&p.cat!=fc) || (showStockOnly && (!p.stock||p.stock<1)) )return;
+        if( !p.name.toLowerCase().includes(q) && (p.price+"").indexOf(q)==-1 ) return;
+        list.innerHTML+=`
+        <div class="product-card" data-i="${i}">
+            <img src="${p.img||DEFAULT_IMG}" class="product-img" onclick="showGallery(${i},0)" title="বড় ছবি" loading="lazy">
+            <div class="product-info">
+                <strong>${p.name}</strong> <small style="color:#888">${p.cat||''}</small><br>
+                <span class="price">${p.price.toFixed(3)} OMR</span>
+                <br>
+                <label>পরিমাণ:</label>
+                <input type="number" min="0" max="${p.stock||99}" class="quantity" value="0" onchange="calcTotal()">${lang=='en'?(" in stock: "+(p.stock||0)):(p.stock!==undefined?` (স্টকে: ${p.stock})`:"")}
+            </div>
+            <div class="prod-actions">
+                <button class="edit-btn" title="Edit" onclick="editProduct(${i})">&#9998;</button>
+                <button class="del-btn" title="Delete" onclick="delProduct(${i})">&#128465;</button>
+            </div>
+        </div>`;
+    });
+    calcTotal();
+}
+function calcTotal(){
+    let total=0, qtysum=0;
+    let all=document.querySelectorAll('.product-card');
+    all.forEach(card=>{
+        let i=card.getAttribute('data-i'), quant=parseFloat(card.querySelector('.quantity').value)||0;
+        if(quant>0){total+=quant*Number(products[i].price);qtysum+=quant;}
+    });
+    let tbill=`মোট বিল: ${total.toFixed(3)} OMR`;
+    if(deliveryCharge) tbill+=` + ডেলিভারি: ${deliveryCharge.toFixed(3)} OMR ⇒ মোট: ${(total+deliveryCharge).toFixed(3)} OMR`;
+    document.getElementById('total-bill').innerText=tbill;
+}
+function checkLocation(){
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(pos=>{
+      let d=getDistanceKM(SHOP_LAT,SHOP_LON,pos.coords.latitude,pos.coords.longitude);
+      document.getElementById('main-app').style.opacity="1";
+      document.getElementById('main-app').style.pointerEvents="auto";
+      document.getElementById('order-btn').style.display="inline-block";
+      if(d<=freeRange){
+        document.getElementById('loc-status').innerText=`দূরত্ব: ${d.toFixed(1)} কিমি ✅ (ফ্রি ডেলিভারি)`;
+        document.getElementById('loc-status').style.color="green";
+        deliveryCharge=0;
+      }else{
+        document.getElementById('loc-status').innerText=`দূরত্ব: ${d.toFixed(1)} কিমি. (ডেলিভারি চার্জ প্রযোজ্য)`;
+        document.getElementById('loc-status').style.color="#d62828"; deliveryCharge=0.700;
+      }
+      calcTotal();
+    },()=>alert(lang==='bn'?"লোকেশন নিতে পারিনি!":"Failed to get location."));
+  }
+}
+function prepareOrder(){
+    // Validate
+    let name=(document.getElementById('user-name').value||"").trim(),
+        addr=(document.getElementById('user-addr').value||"").trim(),
+        phone=(document.getElementById('user-phone').value||"").trim();
+    if(!name||!addr||phone.length<7) return alert(lang=='en'?"Fill all info":"নাম, ঠিকানা ও মোবাইল দিন");
+    let chosen=[], ordlist=[];
+    document.querySelectorAll('.product-card').forEach(card=>{
+        let i=card.getAttribute('data-i'),
+            q=parseFloat(card.querySelector('.quantity').value)||0;
+        if(q>0) {chosen.push(1);ordlist.push({...products[i],qty:q,idx:i});}
+    });
+    if(!chosen.length) return alert(lang==='en'?"Select at least one product":"কমপক্ষে একটি পণ্যের পরিমাণ দিন");
+    // Confirm modal
+    if(confirm(lang=="en"?"Do you want to place your order?\nYou will get a confirmation code.":"আপনি কি নিশ্চিত অর্ডার দিবেন?")) showOTP(() => sendOrder(ordlist,name,addr,phone));
+}
+function sendOrder(ordlist, name, addr, phone){
+    // Check stock
+    for(let o of ordlist) if(o.qty>o.stock){
+        alert(`${o.name} - স্টকের বেশী অর্ডার!`);
+        return;
+    }
+    let dt=new Date(), ttotal=0;
+    let msg=`নতুন অর্ডার:\nনাম: ${name}\nঠিকানা: ${addr}\nমোবাইল: ${phone}\n----------\n`;
+    ordlist.forEach(item=>{
+        ttotal+=item.qty*item.price;
+        msg+=`- ${item.name} × ${item.qty}: ${(item.price*item.qty).toFixed(3)} OMR\n`;
+    });
+    if(deliveryCharge) msg+=`ডেলিভারি: ${deliveryCharge.toFixed(3)} OMR\n`;
+    msg+=`-----\nমোট: ${(ttotal+deliveryCharge).toFixed(3)} OMR`;
+    // stock minus
+    ordlist.forEach(item=>{products[item.idx].stock-=(item.qty); if(products[item.idx].stock<0)products[item.idx].stock=0;});
+    localStorage.setItem('myProducts',JSON.stringify(products));
+    render();
+    // save history
+    orders.unshift({name,addr,phone,date:dt.toLocaleString(),items:ordlist, sum:(ttotal+deliveryCharge)});
+    if(orders.length>30)orders.length=30;
+    localStorage.setItem('orderHistory',JSON.stringify(orders));
+    // WhatsApp open
+    window.open(`https://wa.me/8801843614110?text=${encodeURIComponent(msg)}`);
+}
+function showOTP(cb){
+    let code=(""+Math.floor(Math.random()*9000+1000));
+    document.getElementById('otp-modal').style.display="block";
+    document.getElementById('otp-msg').innerText=(lang=='en'?"Enter OTP: ":"OTP দিন: ")+code;
+    document.getElementById('otp-input').value='';
+    window._otpcode=code; window._otpCb=cb;
+}
+function submitOTP(){
+    let code=(document.getElementById('otp-input').value||"").trim();
+    if(code==window._otpcode){document.getElementById('otp-modal').style.display='none';window._otpCb&&window._otpCb();}
+    else alert(lang=='en'?"Incorrect OTP!":"OTP ভুল!");
+}
+// Admin panel ------------
+function accessAdmin(){
+    if(prompt(lang=='en'?"Password:":"পাসওয়ার্ড:")===ADMIN_PASS) document.getElementById('admin-panel').style.display="block";
+}
+function addOrUpdateProduct(){
+    let n=document.getElementById('new-name').value.trim(),
+        p=parseFloat(document.getElementById('new-price').value),
+        img=document.getElementById('new-img').value.trim()||window._previewImgUrl||DEFAULT_IMG,
+        cat=document.getElementById('new-cat').value.trim(),
+        stok=parseInt(document.getElementById('new-stock').value),
+        editI=document.getElementById('edit-index').value;
+    let imgs=window._multiImgs||[];
+    if(!n || isNaN(p) || p<=0 || !cat || isNaN(stok)) return alert("সঠিক নাম, দাম, ক্যাটাগরি ও স্টক দিন");
+    let obj={name:n,price:p,cat:cat,img:img,stock:stok,imgs:imgs};
+    if(editI!==""){products[editI]=obj;document.getElementById('edit-index').value="";}
+    else products.push(obj);
+    window._multiImgs=[]; window._previewImgUrl=""; document.getElementById('img-prev').innerHTML="";
+    localStorage.setItem('myProducts',JSON.stringify(products));
+    document.getElementById('new-name').value="";
+    document.getElementById('new-price').value="";
+    document.getElementById('new-cat').value="";
+    document.getElementById('new-stock').value="";
+    document.getElementById('new-img').value="";
+    render();
+    alert(lang=='en'?"Product Added":"পণ্য যোগ/এডিট হয়েছে!");
+}
+function editProduct(i){
+   let p=products[i];
+   document.getElementById('new-name').value=p.name;
+   document.getElementById('new-price').value=p.price;
+   document.getElementById('new-img').value=p.img;
+   document.getElementById('new-cat').value=p.cat;
+   document.getElementById('new-stock').value=p.stock;
+   document.getElementById('edit-index').value=i;
+   document.getElementById('admin-panel').style.display="block";
+}
+function delProduct(i){
+   if(confirm("ডিলিট করবেন?")){products.splice(i,1);localStorage.setItem('myProducts',JSON.stringify(products));render();}
+}
+function clearAllData(){
+    if(confirm("সব ডাটা মুছে ফেলবেন?")){localStorage.clear();location.reload();}
+}
+// Image preview
+function previewImg(){
+  let f=document.getElementById('new-img-file').files[0];
+  if(f){
+    let r=new FileReader();
+    r.onload=function(e){
+      let u=e.target.result;
+      window._previewImgUrl=u;
+      document.getElementById('img-prev').innerHTML='<img src="'+u+'" style="max-width:110px;border-radius:5px;">';
+      // add to multiimgs for gallery
+      window._multiImgs=[u];
+    };
+    r.readAsDataURL(f);
+  }
+}
+// Multiple image gallery (basic demo, modal)
+function showGallery(i,imgIdx){
+   let imgs=[products[i].img].concat(products[i].imgs||[]).filter(Boolean);
+   if(imgs.length<1)return;
+   let html=`<div style="position:fixed;left:0;top:0;right:0;bottom:0;z-index:999;background:rgba(0,0,0,0.78);" onclick="this.remove()">
+    <img src="${imgs[imgIdx]}" style="max-width:90vw;max-height:72vh;margin:3vh auto;display:block;border-radius:14px;">
+    <div style="text-align:center;margin-top:4px;">${imgs.map((u,ix)=>`<img src="${u}" style="width:35px;height:35px;object-fit:cover;border-radius:6px;margin:0 2px;${ix==imgIdx?'filter:brightness(0.7)':''}" onclick="event.stopPropagation();showGallery(${i},${ix})">`).join('')}</div>
+    </div>`;
+   document.body.insertAdjacentHTML('beforeend',html);
+}
+// Feedback
+function sendFeedback(){
+    let t=document.getElementById('fb-text').value.trim();
+    if(t.length<3) return alert("ফিডব্যাক লিখুন");
+    feedbacks.unshift( {msg:t, dt:new Date().toLocaleString()});
+    localStorage.setItem('feedbacks', JSON.stringify(feedbacks));
+    document.getElementById('fb-text').value="";
+    renderFeedback();
+    alert(lang=='en'?"Thank you!":"ধন্যবাদ!");
+}
+function renderFeedback(){
+    let el=document.getElementById('feedback-list'); el.innerHTML="";
+    (feedbacks.slice(0,7)).forEach(fb=>{
+        el.innerHTML+=`<div class="fbmsg">${fb.msg}<div style="font-size:11px;color:#aaa">${fb.dt}</div></div>`;
+    });
+}
+// Order History
+function showHistory(){
+    let m=document.getElementById("history-modal");
+    m.style.display="block";
+    let hl=document.getElementById("history-list");
+    hl.innerHTML="";
+    if(!orders.length){hl.innerHTML="কোন history নেই।";return;}
+    orders.slice(0,12).forEach(o=>{
+        let itms=o.items.map(x=>`${x.name} ×${x.qty}`).join("; ");
+        hl.innerHTML+=`<div style="background:#f3f7f9;border-radius:8px;padding:10px 9px;margin-bottom:8px;">
+            <b>${o.name}</b> [${o.date}]<br>
+            <span>${o.addr}, ${o.phone}</span><br>
+            <span style="font-size:14px">${itms}</span> <br>
+            <b>মোটঃ ${o.sum} OMR</b></div>`;
+    });
+}
+function closeHistory(){ document.getElementById("history-modal").style.display="none"; }
+// PDF Download (very basic)
+function downloadPDF(){
+    let el=document.getElementById('product-list'), txt="", bill=document.getElementById('total-bill').innerText;
+    document.querySelectorAll('.product-card').forEach(card=>{
+        let i=card.getAttribute('data-i'),q=card.querySelector('.quantity').value||0,qn=Number(q); 
+        if(qn>0) txt+=`${products[i].name}: ${qn} × ${products[i].price} OMR\n`;
+    });
+    let blob=new Blob([txt+"\n"+bill],{type:"text/plain"});
+    let a=document.createElement('a');
+    a.href=URL.createObjectURL(blob); a.download="order.txt";
+    a.click();
+}
+render(); renderFeedback();
+window.setLang=setLang
+</script>
+<div id="welcome-modal" style="display:none; position:fixed; z-index:100; left:0; top:0; width:100%; height:100%; background-color:rgba(0,0,0,0.6); animation: fadeIn 0.5s;">
+    <div style="background-color:white; margin:15% auto; padding:30px; border-radius:15px; width:85%; max-width:400px; text-align:center; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+        <h2 style="color:#28a745;">স্বাগতম! 🛍️</h2>
+        <p style="font-size:18px; color:#333; line-height:1.6;">
+            <b>কাঞ্চন নগর</b> স্মার্ট শপে আপনাকে স্বাগতম। <br>
+            আপনার প্রয়োজনীয় পণ্য অর্ডার করুন, আমরা <b>৬ কিমি</b> এর মধ্যে দ্রুত ডেলিভারি পৌঁছে দেব!
+        </p>
+        <button onclick="closeWelcome()" style="background-color:#28a745; color:white; padding:12px 30px; border:none; border-radius:8px; font-size:16px; cursor:pointer; font-weight:bold;">কেনাকাটা শুরু করুন</button>
+    </div>
+</div>
+
+<script>
+    // অ্যাপ ওপেন হলে পপ-আপ দেখাবে
+    window.onload = function() {
+        // ১ সেকেন্ড পর পপ-আপ আসবে
+        setTimeout(function() {
+            document.getElementById('welcome-modal').style.display = 'block';
+        }, 1000);
+    };
+
+    function closeWelcome() {
+        document.getElementById('welcome-modal').style.display = 'none';
+    }
+</script>
+
+<style>
+    @keyframes fadeIn {
+        from {opacity: 0;}
+        to {opacity: 1;}
+    }
+</style>
+</body>
+</html>
