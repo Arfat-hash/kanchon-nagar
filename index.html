@@ -79,7 +79,7 @@
         <div id="product-list"></div>
         <!-- সারাংশ ও অর্ডার -->
         <div class="app-invoice">
-            <p id="total-bill">মোট বিল: ০.০০০ OMR</p>
+            <p id="total-bill">মোট বিল: ০.০০০ TK</p>
             <input type="text" id="user-name" placeholder="আপনার নাম">
             <input type="text" id="user-addr" placeholder="বাসার নম্বর ও এলাকা">
             <input type="text" id="user-phone" placeholder="যোগাযোগ নাম্বার" maxlength="15">
@@ -211,8 +211,8 @@ function calcTotal(){
         let i=card.getAttribute('data-i'), quant=parseFloat(card.querySelector('.quantity').value)||0;
         if(quant>0){total+=quant*Number(products[i].price);qtysum+=quant;}
     });
-    let tbill=`মোট বিল: ${total.toFixed(3)} OMR`;
-    if(deliveryCharge) tbill+=` + ডেলিভারি: ${deliveryCharge.toFixed(3)} OMR ⇒ মোট: ${(total+deliveryCharge).toFixed(3)} OMR`;
+    let tbill=`মোট বিল: ${total.toFixed(3)} TK`;
+    if(deliveryCharge) tbill+=` + ডেলিভারি: ${deliveryCharge.toFixed(3)} TK ⇒ মোট: ${(total+deliveryCharge).toFixed(3)} TK`;
     document.getElementById('total-bill').innerText=tbill;
 }
 function checkLocation(){
@@ -260,10 +260,10 @@ function sendOrder(ordlist, name, addr, phone){
     let msg=`নতুন অর্ডার:\nনাম: ${name}\nঠিকানা: ${addr}\nমোবাইল: ${phone}\n----------\n`;
     ordlist.forEach(item=>{
         ttotal+=item.qty*item.price;
-        msg+=`- ${item.name} × ${item.qty}: ${(item.price*item.qty).toFixed(3)} OMR\n`;
+        msg+=`- ${item.name} × ${item.qty}: ${(item.price*item.qty).toFixed(3)} TK\n`;
     });
-    if(deliveryCharge) msg+=`ডেলিভারি: ${deliveryCharge.toFixed(3)} OMR\n`;
-    msg+=`-----\nমোট: ${(ttotal+deliveryCharge).toFixed(3)} OMR`;
+    if(deliveryCharge) msg+=`ডেলিভারি: ${deliveryCharge.toFixed(3)} TK\n`;
+    msg+=`-----\nমোট: ${(ttotal+deliveryCharge).toFixed(3)} TK`;
     // stock minus
     ordlist.forEach(item=>{products[item.idx].stock-=(item.qty); if(products[item.idx].stock<0)products[item.idx].stock=0;});
     localStorage.setItem('myProducts',JSON.stringify(products));
@@ -273,7 +273,7 @@ function sendOrder(ordlist, name, addr, phone){
     if(orders.length>30)orders.length=30;
     localStorage.setItem('orderHistory',JSON.stringify(orders));
     // WhatsApp open
-    window.open(`https://wa.me/8801843614110?text=${encodeURIComponent(msg)}`);
+    window.open(`https://wa.me/8801644630709?text=${encodeURIComponent(msg)}`);
 }
 function showOTP(cb){
     let code=(""+Math.floor(Math.random()*9000+1000));
